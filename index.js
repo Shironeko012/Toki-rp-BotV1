@@ -61,9 +61,7 @@ sock.ev.on("connection.update", async(update)=>{
 
 const { connection,lastDisconnect } = update
 
-if(connection === "connecting"){
-console.log("Connecting to WhatsApp...")
-}
+if(connection === "connecting" && !sock.authState.creds.registered && !pairingRequested){
 
 /* request pairing code only once */
 
