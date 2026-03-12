@@ -25,8 +25,8 @@ if(!m || !m.message) return
 
 const jid = m.key.remoteJid
 
-// ignore group chat
-if(jid.endsWith("@g.us")) return
+// ignore broadcast & group
+if(!jid || jid.endsWith("@g.us") || jid === "status@broadcast") return
 
 // extract text
 const text =
@@ -41,54 +41,69 @@ await typing(sock, jid, text)
 // emotion detection
 const emotion = emotionAI(text)
 
-// get history
+// conversation history
 let history = memory.getHistory(jid) || []
-
-// limit history supaya AI tidak overload
 history = history.slice(-config.memoryLimit)
 
-// relationship data
+// relationship state
 const relation = relationship.get(jid)
 
 // random scene
 let scene = ""
-
 if(Math.random() < config.sceneChance){
 scene = await sceneAI(text)
 }
 
+// random dream event
+let dream = ""
+if(Math.random() < config.dreamChance){
+dream = await dreamAI()
+}
+
 // build prompt
 const prompt = `
-Emotion:${emotion}
+You are Toki from Blue Archive.
 
-Relationship:${JSON.stringify(relation)}
+Emotion: ${emotion}
 
-Scene:${scene}
+Relationship: ${JSON.stringify(relation)}
 
-Story:${JSON.stringify(story)}
+Scene: ${scene}
+
+Dream: ${dream}
 
 Conversation History:
 ${JSON.stringify(history)}
 
-User:${text}
+User: ${text}
+
+Respond as Toki in roleplay format.
 `
 
-// ask Gemini AI
-const reply = await askGemini(prompt)
+// ask Gemini
+let reply
+
+try{
+
+reply = await askGemini(prompt)
+
+}catch(e){
+
+console.error("AI error:", e)
+
+reply = "*Toki terdiam sejenak sebelum menjawab.*"
+
+}
 
 // save memory
 memory.save(jid, text, reply)
-
 learning.learn(jid, text)
-
 relationship.update(jid, text)
 
-storyAI.progress(jid, text)
-
-// send reply
+// send message
 await sock.sendMessage(jid,{ text: reply })
 
-// optional voice message
+// optional voice
 if(Math.random() < config.voiceChance){
 await voice(sock, jid, reply)
 }
