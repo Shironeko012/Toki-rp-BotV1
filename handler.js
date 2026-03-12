@@ -1,5 +1,5 @@
 const gemini = require("./ai/gemini")
-
+const askGemini = require("./ai/gemini")
 const emotionAI = require("./ai/emotionAI")
 const sceneAI = require("./ai/sceneAI")
 const dreamAI = require("./ai/dreamAI")
@@ -19,6 +19,12 @@ module.exports = async(sock,msg)=>{
 const m = msg.messages[0]
 
 if(!m.message) return
+
+const reply = await askGemini(text)
+
+await sock.sendMessage(jid,{
+text: reply
+})
 
 const jid = m.key.remoteJid
 
