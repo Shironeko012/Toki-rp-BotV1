@@ -89,7 +89,27 @@ console.error("Typing simulation error:", err.message)
 // AI thinking delay
 const thinking = Math.floor(Math.random() * 600 + 300)
 
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+module.exports = async function typing(sock, jid){
+
+try{
+
+const thinking = Math.floor(Math.random() * 3000) + 2000
+
+await sock.sendPresenceUpdate("composing", jid)
+
 await sleep(thinking)
+
+await sock.sendPresenceUpdate("paused", jid)
+
+}catch(err){
+
+console.log("Typing error:", err)
+
+}
+
+}
 
 // delay berdasarkan panjang teks
 let delay
