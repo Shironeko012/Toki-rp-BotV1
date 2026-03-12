@@ -1,6 +1,8 @@
-exports.detectEmotion=(text)=>{
+module.exports = function emotionAI(text){
 
-text=text.toLowerCase()
+if(!text) return "neutral"
+
+text = text.toLowerCase()
 
 if(text.includes("sedih")) return "sad"
 if(text.includes("capek")) return "tired"
