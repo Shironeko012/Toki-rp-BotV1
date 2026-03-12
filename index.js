@@ -19,7 +19,6 @@ const handler = require("./handler")
 const { antiCrash } = require("./utils/antiCrash")
 
 const routine = require("./systems/routine")
-// const initiator = require("./systems/aiInitiator")
 
 const app = express()
 
@@ -53,24 +52,68 @@ browser:["TOKI","AI","V2"]
 sock.ev.on("creds.update", saveCreds)
 
 /*
-PAIRING CODE LOGIN
+CONNECTION UPDATE
 */
 
-if (!sock.authState.creds.registered) {
+sock.ev.on("connection.update", async(update)=>{
+
+const { connection,lastDisconnect } = update
+
+if(connection === "connecting"){
+console.log("Connecting to WhatsApp...")
+}
+
+/* request pairing code only once */
+
+if(!sock.authState.creds.registered && connection === "connecting"){
 
 const phone = process.env.PHONE_NUMBER
 
 if(!phone){
+
 console.log("PHONE_NUMBER env not set")
+
 }else{
+
+try{
 
 const code = await sock.requestPairingCode(phone)
 
 console.log("PAIRING CODE:", code)
 
+}catch(err){
+
+console.log("Pairing error:", err.message)
+
 }
 
 }
+
+}
+
+if(connection==="open"){
+
+console.log("TOKI BOT CONNECTED")
+
+}
+
+if(connection==="close"){
+
+const reason =
+lastDisconnect?.error?.output?.statusCode
+
+console.log("Connection closed:", reason)
+
+if(reason!==DisconnectReason.loggedOut){
+
+console.log("Reconnecting...")
+setTimeout(start,5000)
+
+}
+
+}
+
+})
 
 /*
 MESSAGE HANDLER
@@ -90,44 +133,7 @@ console.error("Handler error:", err)
 
 })
 
-/*
-CONNECTION UPDATE
-*/
-
-sock.ev.on("connection.update",(update)=>{
-
-const { connection,lastDisconnect } = update
-
-if(connection==="close"){
-
-const reason =
-lastDisconnect?.error?.output?.statusCode
-
-console.log("Connection closed:", reason)
-
-if(reason!==DisconnectReason.loggedOut){
-
-console.log("Reconnecting...")
-setTimeout(start,5000)
-
-}
-
-}
-
-if(connection==="open"){
-
-console.log("TOKI BOT CONNECTED")
-
-}
-
-})
-
-/*
-SYSTEMS
-*/
-
 routine(sock)
-// initiator(sock)
 
 }catch(err){
 
