@@ -1,36 +1,34 @@
 const config = require("../config")
 
+// sleep helper
 function sleep(ms){
 return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-module.exports = async (sock, jid, text = "") => {
+module.exports = async function typing(sock, jid, text = ""){
 
 try{
 
-// socket tidak tersedia
+// safety check
 if(!sock) return
-
-// jid tidak valid
 if(!jid || typeof jid !== "string") return
-
-// socket belum login
 if(!sock.user) return
 
 // config fallback
 const min = config.typingSpeed?.min || 800
 const max = config.typingSpeed?.max || 4000
 
-// delay berpikir AI
-const thinking = Math.floor(Math.random() * 600 + 300)
+// AI thinking delay
+const thinkingDelay = Math.floor(Math.random() * 600 + 300)
 
-await sleep(thinking)
+await sleep(thinkingDelay)
 
-// delay berdasarkan panjang pesan
+// typing delay calculation
 let delay
 
-if(text){
+if(text && typeof text === "string"){
 
+// semakin panjang teks semakin lama mengetik
 const lengthDelay = text.length * 35
 
 delay = Math.min(
@@ -44,27 +42,26 @@ delay = Math.floor(Math.random() * (max - min) + min)
 
 }
 
-// kirim presence mengetik
+// start typing
 try{
 
 await sock.sendPresenceUpdate("composing", jid)
 
-}catch(e){
+}catch{
 
-// jika gagal kirim presence jangan lanjut
 return
 
 }
 
-// delay mengetik
+// typing simulation
 await sleep(delay)
 
-// berhenti mengetik
+// stop typing
 try{
 
 await sock.sendPresenceUpdate("paused", jid)
 
-}catch(e){
+}catch{
 
 return
 
@@ -72,76 +69,12 @@ return
 
 }catch(err){
 
-// ignore error umum supaya bot tidak crash
+// ignore connection errors
 if(
 err?.message?.includes("Connection Closed") ||
 err?.message?.includes("not-authorized") ||
 err?.message?.includes("Precondition Required")
 ){
-return
-}
-
-console.error("Typing simulation error:", err.message)
-
-}
-
-}
-// AI thinking delay
-const thinking = Math.floor(Math.random() * 600 + 300)
-
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
-
-module.exports = async function typing(sock, jid){
-
-try{
-
-const thinking = Math.floor(Math.random() * 3000) + 2000
-
-await sock.sendPresenceUpdate("composing", jid)
-
-await sleep(thinking)
-
-await sock.sendPresenceUpdate("paused", jid)
-
-}catch(err){
-
-console.log("Typing error:", err)
-
-}
-
-}
-
-// delay berdasarkan panjang teks
-let delay
-
-if(text){
-
-const lengthDelay = text.length * 40
-
-delay = Math.min(
-Math.max(lengthDelay, min),
-max
-)
-
-}else{
-
-delay = Math.floor(Math.random() * (max - min) + min)
-
-}
-
-// mulai mengetik
-await sock.sendPresenceUpdate("composing", jid)
-
-// delay mengetik
-await sleep(delay)
-
-// berhenti mengetik
-await sock.sendPresenceUpdate("paused", jid)
-
-}catch(err){
-
-// ignore error supaya bot tidak crash
-if(err?.message?.includes("Connection Closed")){
 return
 }
 
