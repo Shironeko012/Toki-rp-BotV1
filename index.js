@@ -59,13 +59,15 @@ CONNECTION UPDATE
 
 sock.ev.on("connection.update", async(update)=>{
 
-const { connection,lastDisconnect } = update
+const { connection, lastDisconnect } = update
 
-if(connection === "connecting" && !sock.authState.creds.registered && !pairingRequested){
+if(connection === "connecting"){
+console.log("Connecting to WhatsApp...")
+}
 
 /* request pairing code only once */
 
-if(!sock.authState.creds.registered && !pairingRequested){
+if(connection === "connecting" && !sock.authState.creds.registered && !pairingRequested){
 
 pairingRequested = true
 
@@ -93,20 +95,17 @@ console.log("Pairing error:", err.message)
 
 }
 
-if(connection==="open"){
-
+if(connection === "open"){
 console.log("TOKI BOT CONNECTED")
-
 }
 
-if(connection==="close"){
+if(connection === "close"){
 
-const reason =
-lastDisconnect?.error?.output?.statusCode
+const reason = lastDisconnect?.error?.output?.statusCode
 
 console.log("Connection closed:", reason)
 
-if(reason!==DisconnectReason.loggedOut){
+if(reason !== DisconnectReason.loggedOut){
 
 console.log("Reconnecting...")
 setTimeout(start,5000)
@@ -140,7 +139,6 @@ routine(sock)
 }catch(err){
 
 console.error("START ERROR:", err)
-
 setTimeout(start,5000)
 
 }
