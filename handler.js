@@ -1,8 +1,8 @@
 const askGemini = require("./ai/gemini")
 
-const emotionAI = require("./ai/emotionAI")
-const sceneAI = require("./ai/sceneAI")
-const storyAI = require("./ai/storyAI")
+const emotionAI = require("./ai/emotion")
+const sceneAI = require("./ai/sceneGenerator")
+const dreamAI = require("./ai/dreamAI")
 
 const memory = require("./memory/memoryManager")
 const learning = require("./memory/learning")
