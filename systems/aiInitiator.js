@@ -1,11 +1,20 @@
-setInterval(()=>{
+module.exports = function initiator(sock){
 
-if(Math.random()<0.02){
+setInterval(async ()=>{
 
-sock.sendMessage(user,{
-text:"Sensei... apakah anda sibuk?"
+// contoh AI message duluan
+const user = null // nanti bisa ambil dari database
+
+if(!user) return
+
+if(Math.random() < 0.02){
+
+await sock.sendMessage(user,{
+text: "Sensei... apakah anda sedang sibuk?"
 })
 
 }
 
 },900000)
+
+}
