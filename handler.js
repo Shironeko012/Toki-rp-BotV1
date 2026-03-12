@@ -17,21 +17,25 @@ module.exports = async (sock, msg) => {
 
 try{
 
-if(!msg.messages) return
+if(!msg || !msg.messages) return
 
 const m = msg.messages[0]
 
 if(!m || !m.message) return
 
-const jid = m.key.remoteJid
+const jid = m.key?.remoteJid
 
-// ignore broadcast & group
-if(!jid || jid.endsWith("@g.us") || jid === "status@broadcast") return
+if(!jid) return
 
-// extract message text
+// ignore group & broadcast
+if(jid.endsWith("@g.us") || jid === "status@broadcast") return
+
+// extract text (support more message types)
 const text =
 m.message.conversation ||
-m.message.extendedTextMessage?.text
+m.message.extendedTextMessage?.text ||
+m.message.imageMessage?.caption ||
+m.message.videoMessage?.caption
 
 if(!text) return
 
@@ -39,17 +43,27 @@ if(!text) return
 await typing(sock, jid, text)
 
 // emotion detection
-const emotion = emotionAI(text)
+const emotion = emotionAI(text) || "neutral"
 
 // conversation history
 let history = memory.getHistory(jid) || []
-history = history.slice(-config.memoryLimit)
 
-// relationship state
-const relation = relationship.get(jid)
+if(config.memoryLimit){
+history = history.slice(-config.memoryLimit)
+}
+
+// relationship
+let relation = {}
+
+try{
+relation = relationship.get(jid)
+}catch(e){
+console.error("Relationship error:", e)
+}
 
 // random scene
 let scene = ""
+
 try{
 if(Math.random() < config.sceneChance){
 scene = await sceneAI(text)
@@ -58,8 +72,9 @@ scene = await sceneAI(text)
 console.error("SceneAI error:", e)
 }
 
-// random dream event
+// random dream
 let dream = ""
+
 try{
 if(Math.random() < config.dreamChance){
 dream = await dreamAI()
@@ -74,29 +89,26 @@ You are Asuma Toki from Blue Archive.
 
 Personality:
 Calm, professional, loyal maid and bodyguard.
-You speak politely to Sensei.
+
+Speak politely to Sensei.
 
 Rules:
-Use short sentences.
-Use *action* format.
 Stay in character.
-Never mention you are an AI.
-
-Example style:
-
-*Toki adjusts her gloves.*
-
-"Sensei, you look tired today."
+Use *action* style sometimes.
+Keep responses natural.
 
 Context:
 
 Emotion: ${emotion}
 
-Relationship: ${JSON.stringify(relation)}
+Relationship:
+${JSON.stringify(relation)}
 
-Scene: ${scene}
+Scene:
+${scene}
 
-Dream: ${dream}
+Dream:
+${dream}
 
 Conversation History:
 ${JSON.stringify(history)}
@@ -104,10 +116,9 @@ ${JSON.stringify(history)}
 User message:
 ${text}
 
-Respond as Toki.
+Reply as Toki.
 `
 
-// ask AI
 let reply = ""
 
 try{
@@ -116,25 +127,27 @@ reply = await askGemini(prompt)
 
 }catch(e){
 
-console.error("AI error:", e)
+console.error("Gemini error:", e)
 
 reply = "*Toki terdiam sejenak sebelum menjawab.*"
 
 }
 
-// fallback
+// fallback reply
 if(!reply || reply.length < 3){
 reply = "*Toki terlihat berpikir sejenak.*"
 }
 
 // save memory
+try{
 memory.save(jid, text, reply)
-
 learning.learn(jid, text)
-
 relationship.update(jid, text)
+}catch(e){
+console.error("Memory error:", e)
+}
 
-// send message
+// send reply
 await sock.sendMessage(jid,{ text: reply })
 
 // optional voice
