@@ -1,4 +1,4 @@
-cconst axios = require("axios")
+const axios = require("axios")
 const config = require("../config")
 
 exports.generateScene = async(text)=>{
