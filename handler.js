@@ -1,5 +1,5 @@
-const gemini = require("./ai/gemini")
 const askGemini = require("./ai/gemini")
+
 const emotionAI = require("./ai/emotionAI")
 const sceneAI = require("./ai/sceneAI")
 const dreamAI = require("./ai/dreamAI")
@@ -20,15 +20,13 @@ const m = msg.messages[0]
 
 if(!m.message) return
 
-const reply = await askGemini(text)
-
-await sock.sendMessage(jid,{
-text: reply
-})
-
 const jid = m.key.remoteJid
 
+/* ignore group */
+
 if(jid.endsWith("@g.us")) return
+
+/* extract message */
 
 const text =
 m.message.conversation ||
@@ -36,13 +34,23 @@ m.message.extendedTextMessage?.text
 
 if(!text) return
 
+/* typing simulation */
+
 await typing(sock,jid,text)
+
+/* emotion detection */
 
 const emotion = emotionAI(text)
 
+/* memory */
+
 const history = memory.getHistory(jid)
 
+/* relationship */
+
 const relation = relationship.get(jid)
+
+/* random scene */
 
 let scene=""
 
@@ -52,18 +60,32 @@ scene = await sceneAI(text)
 
 }
 
+/* story state */
+
 const story = storyAI.get(jid)
+
+/* build prompt */
 
 const prompt = `
 Emotion:${emotion}
+
 Relationship:${JSON.stringify(relation)}
+
 Scene:${scene}
+
 Story:${JSON.stringify(story)}
+
+Conversation History:
+${JSON.stringify(history)}
 
 User:${text}
 `
 
-const reply = await gemini(prompt)
+/* ask AI */
+
+const reply = await askGemini(prompt)
+
+/* save memory */
 
 memory.save(jid,text,reply)
 
@@ -73,12 +95,14 @@ relationship.update(jid,text)
 
 storyAI.progress(jid,text)
 
-await sock.sendMessage(jid,{text:reply})
+/* send message */
+
+await sock.sendMessage(jid,{ text: reply })
+
+/* optional voice */
 
 if(Math.random()<config.voiceChance){
 
 await voice(sock,jid,reply)
-
-}
 
 }
