@@ -15,6 +15,23 @@ model: config.ai.model
 Persona TOKI
 */
 
+const { GoogleGenerativeAI } = require("@google/generative-ai")
+const config = require("../config")
+
+if(!config.geminikey){
+console.error("❌ GEMINI API KEY NOT FOUND")
+}
+
+const genAI = new GoogleGenerativeAI(config.geminikey)
+
+const model = genAI.getGenerativeModel({
+model: "gemini-1.5-flash-latest"
+})
+
+/*
+TOKI Persona
+*/
+
 const persona = `
 You are Asuma Toki from Blue Archive.
 
@@ -26,35 +43,47 @@ Personality:
 - loyal
 - slightly cold but caring
 - protective
+- speaks softly and professionally
 
-Speaking style:
-Use roleplay format.
+Speech style:
+- short responses
+- elegant tone
+- roleplay format
 
-Example:
+Format example:
 
-*Toki pours tea quietly*
+*Toki adjusts her gloves quietly.*
 
-"Sensei, you look tired today."
+"Sensei, you seem tired today."
 
+Rules:
 Stay in character.
-Never mention you are an AI.
+Never mention AI.
+Do not break roleplay.
+Keep responses under 120 words.
 `
 
 /*
 Main AI function
 */
 
-async function askGemini(userMessage){
+async function askGemini(userMessage, history = "", scene = ""){
 
 try{
 
 const prompt = `
 ${persona}
 
+Conversation history:
+${history}
+
+Current scene:
+${scene}
+
 User message:
 ${userMessage}
 
-Reply as Toki.
+Respond as Toki in immersive roleplay.
 `
 
 const result = await model.generateContent(prompt)
@@ -63,7 +92,9 @@ const response = await result.response
 
 const text = response.text()
 
-return text
+if(!text) return "*Toki menatap Sensei dengan tenang.*"
+
+return text.trim()
 
 }catch(err){
 
