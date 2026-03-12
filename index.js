@@ -1,8 +1,6 @@
 // FIX crypto for Baileys
 const crypto = require("crypto")
-if (!global.crypto) {
-global.crypto = crypto.webcrypto
-}
+if (!global.crypto) global.crypto = crypto.webcrypto
 
 const express = require("express")
 
@@ -48,7 +46,8 @@ const sock = makeWASocket({
 version,
 auth: state,
 logger: pino({ level:"silent" }),
-browser:["TOKI","AI","V2"]
+browser:["TOKI","AI","V2"],
+syncFullHistory:false
 })
 
 sock.ev.on("creds.update", saveCreds)
@@ -65,19 +64,22 @@ if(connection === "connecting"){
 console.log("Connecting to WhatsApp...")
 }
 
-/* request pairing code only once */
+/*
+PAIRING CODE (DELAYED)
+*/
 
 if(connection === "connecting" && !sock.authState.creds.registered && !pairingRequested){
 
 pairingRequested = true
 
-const phone = process.env.PHONE_NUMBER
+setTimeout(async ()=>{
+
+const phone = process.env.PHONE_NUMBER?.replace(/[^0-9]/g,"")
 
 if(!phone){
-
 console.log("PHONE_NUMBER env not set")
-
-}else{
+return
+}
 
 try{
 
@@ -91,7 +93,7 @@ console.log("Pairing error:", err.message)
 
 }
 
-}
+},5000)
 
 }
 
@@ -107,7 +109,7 @@ console.log("Connection closed:", reason)
 
 if(reason !== DisconnectReason.loggedOut){
 
-console.log("Reconnecting...")
+console.log("Reconnecting in 5 seconds...")
 setTimeout(start,5000)
 
 }
@@ -134,11 +136,16 @@ console.error("Handler error:", err)
 
 })
 
+/*
+SYSTEMS
+*/
+
 routine(sock)
 
 }catch(err){
 
 console.error("START ERROR:", err)
+
 setTimeout(start,5000)
 
 }
