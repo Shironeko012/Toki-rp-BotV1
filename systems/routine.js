@@ -1,23 +1,41 @@
-setInterval(()=>{
+// systems/routine.js
+
+module.exports = function routine(sock){
+
+setInterval(async ()=>{
 
 const hour = new Date().getHours()
 
-if(hour==7){
+const users = [] // nanti bisa diambil dari database user aktif
 
-sendRoutine("selamat pagi hehe")
+for(const jid of users){
+
+if(hour === 7){
+
+await sock.sendMessage(jid,{
+text:"*Toki membuka tirai jendela*\n\nSelamat pagi, Sensei."
+})
 
 }
 
-if(hour==12){
+if(hour === 12){
 
-sendRoutine("makan sianb dulu!")
+await sock.sendMessage(jid,{
+text:"Sensei, jangan lupa makan siang."
+})
 
 }
 
-if(hour==22){
+if(hour === 22){
 
-sendRoutine("selamat malam, tidur yang nyenyak")
+await sock.sendMessage(jid,{
+text:"Hari sudah malam.\nSilakan istirahat, Sensei."
+})
+
+}
 
 }
 
 },600000)
+
+}
