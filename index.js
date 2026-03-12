@@ -13,7 +13,7 @@ const handler = require("./handler")
 const { antiCrash } = require("./utils/antiCrash")
 
 const routine = require("./systems/routine")
-const initiator = require("./systems/aiInitiator")
+// const initiator = require("./systems/aiInitiator")
 
 const app = express()
 
@@ -45,6 +45,26 @@ browser:["TOKI","AI","V2"]
 })
 
 sock.ev.on("creds.update", saveCreds)
+
+/*
+PAIRING CODE LOGIN
+*/
+
+if (!sock.authState.creds.registered) {
+
+const phone = process.env.PHONE_NUMBER
+
+if(!phone){
+console.log("PHONE_NUMBER env not set")
+}else{
+
+const code = await sock.requestPairingCode(phone)
+
+console.log("PAIRING CODE:", code)
+
+}
+
+}
 
 sock.ev.on("messages.upsert", async(msg)=>{
 
@@ -89,7 +109,7 @@ console.log("TOKI BOT CONNECTED")
 })
 
 routine(sock)
-//initiator(sock)
+// initiator(sock)
 
 }
 
