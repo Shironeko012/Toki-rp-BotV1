@@ -11,7 +11,8 @@ DisconnectReason,
 fetchLatestBaileysVersion
 } = require("@whiskeysockets/baileys")
 
-const qrcode = require("qrcode-terminal")
+const qrcodeTerminal = require("qrcode-terminal")
+const QRCode = require("qrcode")
 
 const pino = require("pino")
 
@@ -22,13 +23,25 @@ const routine = require("./systems/routine")
 
 const app = express()
 
-app.get("/", (req,res)=>{
+/*
+WEB SERVER
+*/
+
+app.get("/",(req,res)=>{
 res.send("TOKI RP BOT V2 ONLINE")
 })
 
-app.listen(process.env.PORT || 3000, ()=>{
+app.get("/qr",(req,res)=>{
+res.sendFile(__dirname + "/qr.png")
+})
+
+app.listen(process.env.PORT || 3000,()=>{
 console.log("Web server running")
 })
+
+/*
+START BOT
+*/
 
 async function start(){
 
@@ -56,32 +69,46 @@ sock.ev.on("creds.update", saveCreds)
 CONNECTION UPDATE
 */
 
-sock.ev.on("connection.update",(update)=>{
+sock.ev.on("connection.update", async(update)=>{
 
 const { connection, lastDisconnect, qr } = update
 
+/*
+GENERATE QR
+*/
+
 if(qr){
 
-console.log("SCAN QR CODE BELOW:")
-qrcode.generate(qr,{small:false})
+console.log("QR RECEIVED")
+
+// terminal QR
+qrcodeTerminal.generate(qr,{small:true})
+
+// image QR
+await QRCode.toFile("./qr.png", qr)
+
+console.log("QR saved as qr.png")
+
+console.log("Open this in browser:")
+console.log(process.env.RAILWAY_STATIC_URL + "/qr")
 
 }
 
-if(connection === "connecting"){
+if(connection==="connecting"){
 console.log("Connecting to WhatsApp...")
 }
 
-if(connection === "open"){
+if(connection==="open"){
 console.log("TOKI BOT CONNECTED")
 }
 
-if(connection === "close"){
+if(connection==="close"){
 
 const reason = lastDisconnect?.error?.output?.statusCode
 
 console.log("Connection closed:", reason)
 
-if(reason !== DisconnectReason.loggedOut){
+if(reason!==DisconnectReason.loggedOut){
 
 console.log("Reconnecting in 5 seconds...")
 setTimeout(start,5000)
@@ -109,6 +136,10 @@ console.error("Handler error:", err)
 }
 
 })
+
+/*
+SYSTEMS
+*/
 
 routine(sock)
 
