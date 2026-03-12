@@ -88,10 +88,8 @@ console.log("TOKI BOT CONNECTED")
 
 })
 
-/* Start AI systems */
-
 routine(sock)
-initiator(sock)
+//initiator(sock)
 
 }
 
