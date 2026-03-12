@@ -11,6 +11,8 @@ DisconnectReason,
 fetchLatestBaileysVersion
 } = require("@whiskeysockets/baileys")
 
+const qrcode = require("qrcode-terminal")
+
 const pino = require("pino")
 
 const handler = require("./handler")
@@ -27,8 +29,6 @@ res.send("TOKI RP BOT V2 ONLINE")
 app.listen(process.env.PORT || 3000, ()=>{
 console.log("Web server running")
 })
-
-let pairingRequested = false
 
 async function start(){
 
@@ -56,45 +56,19 @@ sock.ev.on("creds.update", saveCreds)
 CONNECTION UPDATE
 */
 
-sock.ev.on("connection.update", async(update)=>{
+sock.ev.on("connection.update",(update)=>{
 
-const { connection, lastDisconnect } = update
+const { connection, lastDisconnect, qr } = update
+
+if(qr){
+
+console.log("SCAN QR CODE BELOW:")
+qrcode.generate(qr,{small:true})
+
+}
 
 if(connection === "connecting"){
 console.log("Connecting to WhatsApp...")
-}
-
-/*
-PAIRING CODE (DELAYED)
-*/
-
-if(connection === "connecting" && !sock.authState.creds.registered && !pairingRequested){
-
-pairingRequested = true
-
-setTimeout(async ()=>{
-
-const phone = process.env.PHONE_NUMBER?.replace(/[^0-9]/g,"")
-
-if(!phone){
-console.log("PHONE_NUMBER env not set")
-return
-}
-
-try{
-
-const code = await sock.requestPairingCode(phone)
-
-console.log("PAIRING CODE:", code)
-
-}catch(err){
-
-console.log("Pairing error:", err.message)
-
-}
-
-},5000)
-
 }
 
 if(connection === "open"){
@@ -135,10 +109,6 @@ console.error("Handler error:", err)
 }
 
 })
-
-/*
-SYSTEMS
-*/
 
 routine(sock)
 
