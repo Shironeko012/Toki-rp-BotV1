@@ -1,32 +1,48 @@
 const config = require("../config")
 
+function sleep(ms){
+return new Promise(resolve => setTimeout(resolve, ms))
+}
+
 module.exports = async (sock, jid, text = "") => {
 
 try{
 
-// fallback jika config tidak ada
+if(!sock || !jid) return
+
+// config fallback
 const min = config.typingSpeed?.min || 800
 const max = config.typingSpeed?.max || 4000
 
-// delay berdasarkan panjang teks
+// thinking delay (AI seperti berpikir dulu)
+const thinking = Math.floor(Math.random() * 500 + 300)
+
+await sleep(thinking)
+
+// base typing delay
 let delay = Math.floor(
 Math.random() * (max - min) + min
 )
 
+// jika ada teks, gunakan panjang teks
 if(text){
+
+const lengthDelay = text.length * 45
+
 delay = Math.min(
-Math.max(text.length * 40, min),
+Math.max(lengthDelay, min),
 max
 )
+
 }
 
-// kirim status typing
+// mulai typing
 await sock.sendPresenceUpdate("composing", jid)
 
-// tunggu delay
-await new Promise(resolve => setTimeout(resolve, delay))
+// delay mengetik
+await sleep(delay)
 
-// stop typing
+// berhenti typing
 await sock.sendPresenceUpdate("paused", jid)
 
 }catch(err){
