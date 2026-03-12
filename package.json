@@ -15,5 +15,6 @@
     "axios": "^1.6.7",
     "pino": "^8.19.0",
     "gtts": "^0.2.1"
+    "@google/generative-ai": "^0.15.0"
   }
 }
