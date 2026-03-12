@@ -1,3 +1,9 @@
+// FIX crypto for Baileys
+const crypto = require("crypto")
+if (!global.crypto) {
+global.crypto = crypto.webcrypto
+}
+
 const express = require("express")
 
 const {
@@ -27,6 +33,8 @@ console.log("Web server running")
 
 async function start(){
 
+try{
+
 console.log("Starting TOKI RP BOT...")
 
 const { state, saveCreds } =
@@ -36,12 +44,10 @@ const { version } =
 await fetchLatestBaileysVersion()
 
 const sock = makeWASocket({
-
 version,
 auth: state,
 logger: pino({ level:"silent" }),
 browser:["TOKI","AI","V2"]
-
 })
 
 sock.ev.on("creds.update", saveCreds)
@@ -66,6 +72,10 @@ console.log("PAIRING CODE:", code)
 
 }
 
+/*
+MESSAGE HANDLER
+*/
+
 sock.ev.on("messages.upsert", async(msg)=>{
 
 try{
@@ -79,6 +89,10 @@ console.error("Handler error:", err)
 }
 
 })
+
+/*
+CONNECTION UPDATE
+*/
 
 sock.ev.on("connection.update",(update)=>{
 
@@ -108,8 +122,20 @@ console.log("TOKI BOT CONNECTED")
 
 })
 
+/*
+SYSTEMS
+*/
+
 routine(sock)
 // initiator(sock)
+
+}catch(err){
+
+console.error("START ERROR:", err)
+
+setTimeout(start,5000)
+
+}
 
 }
 
