@@ -1,3 +1,5 @@
+const express = require("express")
+
 const {
 default: makeWASocket,
 useMultiFileAuthState,
@@ -6,72 +8,69 @@ fetchLatestBaileysVersion
 } = require("@whiskeysockets/baileys")
 
 const pino = require("pino")
+
 const handler = require("./handler")
 const { antiCrash } = require("./utils/antiCrash")
 
-async function startBot(){
+const routine = require("./systems/routine")
+const initiator = require("./systems/aiInitiator")
 
-try{
+const app = express()
 
-const { state, saveCreds } = await useMultiFileAuthState("./session")
+app.get("/",(req,res)=>{
+res.send("TOKI RP BOT V2 ONLINE")
+})
 
-const { version } = await fetchLatestBaileysVersion()
+app.listen(process.env.PORT || 3000)
+
+async function start(){
+
+const { state, saveCreds } =
+await useMultiFileAuthState("./session")
+
+const { version } =
+await fetchLatestBaileysVersion()
 
 const sock = makeWASocket({
+
 version,
 auth: state,
-logger: pino({ level:"silent" }),
-browser:["TOKI","AI","1.0"]
+logger: pino({ level:"silent" })
+
 })
 
 sock.ev.on("creds.update", saveCreds)
 
 sock.ev.on("messages.upsert", async(msg)=>{
 
-try{
-
 await handler(sock,msg)
-
-}catch(err){
-
-console.log("HANDLER ERROR",err)
-
-}
 
 })
 
 sock.ev.on("connection.update",(update)=>{
 
-const { connection, lastDisconnect } = update
+const { connection,lastDisconnect } = update
 
 if(connection==="close"){
 
-const reason = lastDisconnect?.error?.output?.statusCode
+const reason =
+lastDisconnect?.error?.output?.statusCode
 
 if(reason!==DisconnectReason.loggedOut){
 
-console.log("Reconnecting TOKI...")
-startBot()
+setTimeout(start,5000)
 
 }
-
-}else if(connection==="open"){
-
-console.log("TOKI AI ONLINE")
 
 }
 
 })
 
-}catch(e){
-
-console.log("BOT CRASH:",e)
-setTimeout(startBot,5000)
-
-}
+routine(sock)
+initiator(sock)
 
 }
 
 antiCrash()
 
-startBot()
+start()
