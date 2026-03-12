@@ -1,13 +1,18 @@
-const config = require("./config")
-const { chatAI } = require("./ai/aiClient")
-const { detectEmotion } = require("./ai/emotion")
-const { generateScene } = require("./ai/sceneGenerator")
-const { generateEvent } = require("./ai/eventAI")
+const gemini = require("./ai/gemini")
+
+const emotionAI = require("./ai/emotionAI")
+const sceneAI = require("./ai/sceneAI")
+const dreamAI = require("./ai/dreamAI")
+const storyAI = require("./ai/storyAI")
 
 const memory = require("./memory/memoryManager")
+const learning = require("./memory/learning")
+const relationship = require("./memory/relationship")
 
 const typing = require("./utils/typing")
-const voice = require("./utils/voice")
+const voice = require("./utils/voiceTTS")
+
+const config = require("./config")
 
 module.exports = async(sock,msg)=>{
 
@@ -15,10 +20,9 @@ const m = msg.messages[0]
 
 if(!m.message) return
 
-const sender = m.key.remoteJid
-const isGroup = sender.endsWith("@g.us")
+const jid = m.key.remoteJid
 
-if(isGroup) return
+if(jid.endsWith("@g.us")) return
 
 const text =
 m.message.conversation ||
@@ -26,51 +30,48 @@ m.message.extendedTextMessage?.text
 
 if(!text) return
 
-await typing(sock,sender)
+await typing(sock,jid,text)
 
-const emotion = detectEmotion(text)
+const emotion = emotionAI(text)
 
-const history = memory.getHistory(sender)
+const history = memory.getHistory(jid)
 
-const longMemory = memory.getLongTerm(sender)
+const relation = relationship.get(jid)
 
-const relation = memory.getRelationship(sender)
+let scene=""
 
-let scene = ""
+if(Math.random()<config.sceneChance){
 
-if(Math.random()<0.2){
-
-scene = await generateScene(text)
+scene = await sceneAI(text)
 
 }
 
-const aiReply = await chatAI({
+const story = storyAI.get(jid)
 
-userMessage:text,
-history,
-emotion,
-scene,
-longMemory,
-relation
+const prompt = `
+Emotion:${emotion}
+Relationship:${JSON.stringify(relation)}
+Scene:${scene}
+Story:${JSON.stringify(story)}
 
-})
+User:${text}
+`
 
-memory.saveHistory(sender,text,aiReply)
-memory.updateRelationship(sender,text)
+const reply = await gemini(prompt)
 
-await sock.sendMessage(sender,{text:aiReply})
+memory.save(jid,text,reply)
 
-if(Math.random()<0.05){
+learning.learn(jid,text)
 
-const event = await generateEvent()
+relationship.update(jid,text)
 
-await sock.sendMessage(sender,{text:event})
+storyAI.progress(jid,text)
 
-}
+await sock.sendMessage(jid,{text:reply})
 
-if(Math.random()<0.15){
+if(Math.random()<config.voiceChance){
 
-await voice(sock,sender,aiReply)
+await voice(sock,jid,reply)
 
 }
 
