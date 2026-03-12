@@ -1,7 +1,7 @@
 {
-  "name": "toki-ai-bot",
+  "name": "toki-rp-bot",
   "version": "1.0.0",
-  "description": "Toki AI Roleplay WhatsApp Bot",
+  "description": "Toki RP WhatsApp Bot",
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
@@ -11,10 +11,10 @@
     "node": ">=18"
   },
   "dependencies": {
-    "@whiskeysockets/baileys": "^6.7.5",
-    "axios": "^1.6.7",
-    "pino": "^8.19.0",
-    "gtts": "^0.2.1"
-    "@google/generative-ai": "^0.15.0"
+    "@google/generative-ai": "^0.15.0",
+    "@whiskeysockets/baileys": "^6.7.0",
+    "express": "^4.19.2",
+    "gtts": "^0.2.1",
+    "pino": "^8.17.0"
   }
 }
