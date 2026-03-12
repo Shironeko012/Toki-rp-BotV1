@@ -30,6 +30,8 @@ app.listen(process.env.PORT || 3000, ()=>{
 console.log("Web server running")
 })
 
+let pairingRequested = false
+
 async function start(){
 
 try{
@@ -65,7 +67,9 @@ console.log("Connecting to WhatsApp...")
 
 /* request pairing code only once */
 
-if(!sock.authState.creds.registered && connection === "connecting"){
+if(!sock.authState.creds.registered && !pairingRequested){
+
+pairingRequested = true
 
 const phone = process.env.PHONE_NUMBER
 
