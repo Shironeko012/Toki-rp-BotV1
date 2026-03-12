@@ -1,6 +1,6 @@
 const fs = require("fs")
 
-const DB = "./database/relationship.json"
+const DB = "./memory/relationship.json"
 
 function readDB(){
 
