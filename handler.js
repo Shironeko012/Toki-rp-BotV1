@@ -28,7 +28,7 @@ const jid = m.key.remoteJid
 // ignore broadcast & group
 if(!jid || jid.endsWith("@g.us") || jid === "status@broadcast") return
 
-// extract text
+// extract message text
 const text =
 m.message.conversation ||
 m.message.extendedTextMessage?.text
@@ -50,19 +50,45 @@ const relation = relationship.get(jid)
 
 // random scene
 let scene = ""
+try{
 if(Math.random() < config.sceneChance){
 scene = await sceneAI(text)
+}
+}catch(e){
+console.error("SceneAI error:", e)
 }
 
 // random dream event
 let dream = ""
+try{
 if(Math.random() < config.dreamChance){
 dream = await dreamAI()
+}
+}catch(e){
+console.error("DreamAI error:", e)
 }
 
 // build prompt
 const prompt = `
-You are Toki from Blue Archive.
+You are Asuma Toki from Blue Archive.
+
+Personality:
+Calm, professional, loyal maid and bodyguard.
+You speak politely to Sensei.
+
+Rules:
+Use short sentences.
+Use *action* format.
+Stay in character.
+Never mention you are an AI.
+
+Example style:
+
+*Toki adjusts her gloves.*
+
+"Sensei, you look tired today."
+
+Context:
 
 Emotion: ${emotion}
 
@@ -75,13 +101,14 @@ Dream: ${dream}
 Conversation History:
 ${JSON.stringify(history)}
 
-User: ${text}
+User message:
+${text}
 
-Respond as Toki in roleplay format.
+Respond as Toki.
 `
 
-// ask Gemini
-let reply
+// ask AI
+let reply = ""
 
 try{
 
@@ -95,17 +122,28 @@ reply = "*Toki terdiam sejenak sebelum menjawab.*"
 
 }
 
+// fallback
+if(!reply || reply.length < 3){
+reply = "*Toki terlihat berpikir sejenak.*"
+}
+
 // save memory
 memory.save(jid, text, reply)
+
 learning.learn(jid, text)
+
 relationship.update(jid, text)
 
 // send message
 await sock.sendMessage(jid,{ text: reply })
 
 // optional voice
+try{
 if(Math.random() < config.voiceChance){
 await voice(sock, jid, reply)
+}
+}catch(e){
+console.error("Voice error:", e)
 }
 
 }catch(err){
