@@ -1,17 +1,38 @@
 const config = require("../config")
 
-module.exports = async(sock,jid)=>{
+module.exports = async (sock, jid, text = "") => {
 
-const delay = Math.floor(
-Math.random()*
-(config.typingSpeed.max-config.typingSpeed.min)
-+config.typingSpeed.min
+try{
+
+// fallback jika config tidak ada
+const min = config.typingSpeed?.min || 800
+const max = config.typingSpeed?.max || 4000
+
+// delay berdasarkan panjang teks
+let delay = Math.floor(
+Math.random() * (max - min) + min
 )
 
-await sock.sendPresenceUpdate("composing",jid)
+if(text){
+delay = Math.min(
+Math.max(text.length * 40, min),
+max
+)
+}
 
-await new Promise(r=>setTimeout(r,delay))
+// kirim status typing
+await sock.sendPresenceUpdate("composing", jid)
 
-await sock.sendPresenceUpdate("paused",jid)
+// tunggu delay
+await new Promise(resolve => setTimeout(resolve, delay))
+
+// stop typing
+await sock.sendPresenceUpdate("paused", jid)
+
+}catch(err){
+
+console.error("Typing simulation error:", err)
+
+}
 
 }
