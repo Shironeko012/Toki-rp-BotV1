@@ -57,9 +57,6 @@ if(Math.random() < config.sceneChance){
 scene = await sceneAI(text)
 }
 
-// story state
-const story = storyAI.get(jid)
-
 // build prompt
 const prompt = `
 Emotion:${emotion}
