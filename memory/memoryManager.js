@@ -6,7 +6,9 @@ const relationDB = "./memory/relationship.json"
 
 function read(path){
 
-if(!fs.existsSync(path)) return {}
+if(!fs.existsSync(path)){
+fs.writeFileSync(path, JSON.stringify({}))
+}
 
 return JSON.parse(fs.readFileSync(path))
 
@@ -17,6 +19,8 @@ function write(path,data){
 fs.writeFileSync(path,JSON.stringify(data,null,2))
 
 }
+
+/* HISTORY */
 
 exports.getHistory=(user)=>{
 
@@ -43,6 +47,12 @@ write(historyDB,db)
 
 }
 
+/* alias supaya handler lama tidak error */
+
+exports.save = exports.saveHistory
+
+/* LONG TERM MEMORY */
+
 exports.getLongTerm=(user)=>{
 
 const db=read(longDB)
@@ -50,6 +60,8 @@ const db=read(longDB)
 return db[user]||{}
 
 }
+
+/* RELATIONSHIP */
 
 exports.getRelationship=(user)=>{
 
@@ -77,6 +89,8 @@ exports.updateRelationship=(user,text)=>{
 const db=read(relationDB)
 
 if(!db[user]) db[user]={affection:0,trust:0}
+
+text = text.toLowerCase()
 
 if(text.includes("terima kasih"))
 db[user].affection+=1
