@@ -17,13 +17,17 @@ const initiator = require("./systems/aiInitiator")
 
 const app = express()
 
-app.get("/",(req,res)=>{
+app.get("/", (req,res)=>{
 res.send("TOKI RP BOT V2 ONLINE")
 })
 
-app.listen(process.env.PORT || 3000)
+app.listen(process.env.PORT || 3000, ()=>{
+console.log("Web server running")
+})
 
 async function start(){
+
+console.log("Starting TOKI RP BOT...")
 
 const { state, saveCreds } =
 await useMultiFileAuthState("./session")
@@ -35,7 +39,8 @@ const sock = makeWASocket({
 
 version,
 auth: state,
-logger: pino({ level:"silent" })
+logger: pino({ level:"silent" }),
+browser:["TOKI","AI","V2"]
 
 })
 
@@ -43,7 +48,15 @@ sock.ev.on("creds.update", saveCreds)
 
 sock.ev.on("messages.upsert", async(msg)=>{
 
+try{
+
 await handler(sock,msg)
+
+}catch(err){
+
+console.error("Handler error:", err)
+
+}
 
 })
 
@@ -56,15 +69,26 @@ if(connection==="close"){
 const reason =
 lastDisconnect?.error?.output?.statusCode
 
+console.log("Connection closed:", reason)
+
 if(reason!==DisconnectReason.loggedOut){
 
+console.log("Reconnecting...")
 setTimeout(start,5000)
 
 }
 
 }
 
+if(connection==="open"){
+
+console.log("TOKI BOT CONNECTED")
+
+}
+
 })
+
+/* Start AI systems */
 
 routine(sock)
 initiator(sock)
