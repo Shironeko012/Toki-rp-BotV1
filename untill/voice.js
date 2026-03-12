@@ -5,18 +5,26 @@ module.exports = async(sock,jid,text)=>{
 
 try{
 
+const file = "voice_"+Date.now()+".mp3"
+
 const tts = new gtts(text,"en")
 
-tts.save("voice.mp3",async()=>{
+tts.save(file,async()=>{
 
 await sock.sendMessage(jid,{
-audio:fs.readFileSync("voice.mp3"),
+audio:fs.readFileSync(file),
 mimetype:"audio/mp4",
 ptt:true
 })
 
+fs.unlinkSync(file)
+
 })
 
-}catch{}
+}catch(err){
+
+console.log("VOICE ERROR",err)
+
+}
 
 }
