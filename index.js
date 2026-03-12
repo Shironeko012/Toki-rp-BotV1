@@ -82,7 +82,7 @@ if(qr){
 console.log("QR RECEIVED")
 
 // terminal QR
-qrcodeTerminal.generate(qr,{small:true})
+qrcodeTerminal.generate(qr,{small:false})
 
 // image QR
 await QRCode.toFile("./qr.png", qr)
