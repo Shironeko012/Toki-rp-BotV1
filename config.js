@@ -1,18 +1,17 @@
 module.exports = {
 
-botName: "TOKI AI",
-owner: "085601931030",
+botName: "TOKI RP BOT V2",
 
-openai: {
-apiKey: process.env.OPENAI_API_KEY,
-model: "gpt-4o-mini"
+ai: {
+model: "gemini-1.5-flash"
 },
 
-memoryLimit: 20,
+memoryLimit: 12,
 
-typingSpeed: {
-min: 2000,
-max: 6000
-}
+sceneChance: 0.25,
+
+dreamChance: 0.05,
+
+voiceChance: 0.2
 
 }
