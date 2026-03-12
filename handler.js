@@ -2,7 +2,6 @@ const askGemini = require("./ai/gemini")
 
 const emotionAI = require("./ai/emotionAI")
 const sceneAI = require("./ai/sceneAI")
-const dreamAI = require("./ai/dreamAI")
 const storyAI = require("./ai/storyAI")
 
 const memory = require("./memory/memoryManager")
@@ -14,58 +13,54 @@ const voice = require("./utils/voiceTTS")
 
 const config = require("./config")
 
-module.exports = async(sock,msg)=>{
+module.exports = async (sock, msg) => {
+
+try{
+
+if(!msg.messages) return
 
 const m = msg.messages[0]
 
-if(!m.message) return
+if(!m || !m.message) return
 
 const jid = m.key.remoteJid
 
-/* ignore group */
-
+// ignore group chat
 if(jid.endsWith("@g.us")) return
 
-/* extract message */
-
+// extract text
 const text =
 m.message.conversation ||
 m.message.extendedTextMessage?.text
 
 if(!text) return
 
-/* typing simulation */
+// typing simulation
+await typing(sock, jid, text)
 
-await typing(sock,jid,text)
-
-/* emotion detection */
-
+// emotion detection
 const emotion = emotionAI(text)
 
-/* memory */
+// get history
+let history = memory.getHistory(jid) || []
 
-const history = memory.getHistory(jid)
+// limit history supaya AI tidak overload
+history = history.slice(-config.memoryLimit)
 
-/* relationship */
-
+// relationship data
 const relation = relationship.get(jid)
 
-/* random scene */
+// random scene
+let scene = ""
 
-let scene=""
-
-if(Math.random()<config.sceneChance){
-
+if(Math.random() < config.sceneChance){
 scene = await sceneAI(text)
-
 }
 
-/* story state */
-
+// story state
 const story = storyAI.get(jid)
 
-/* build prompt */
-
+// build prompt
 const prompt = `
 Emotion:${emotion}
 
@@ -81,28 +76,30 @@ ${JSON.stringify(history)}
 User:${text}
 `
 
-/* ask AI */
-
+// ask Gemini AI
 const reply = await askGemini(prompt)
 
-/* save memory */
+// save memory
+memory.save(jid, text, reply)
 
-memory.save(jid,text,reply)
+learning.learn(jid, text)
 
-learning.learn(jid,text)
+relationship.update(jid, text)
 
-relationship.update(jid,text)
+storyAI.progress(jid, text)
 
-storyAI.progress(jid,text)
-
-/* send message */
-
+// send reply
 await sock.sendMessage(jid,{ text: reply })
 
-/* optional voice */
+// optional voice message
+if(Math.random() < config.voiceChance){
+await voice(sock, jid, reply)
+}
 
-if(Math.random()<config.voiceChance){
+}catch(err){
 
-await voice(sock,jid,reply)
+console.error("Handler Error:", err)
+
+}
 
 }
