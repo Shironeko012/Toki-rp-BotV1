@@ -7,7 +7,7 @@ geminikey: process.env.GEMINI_API_KEY,
 
 // AI model
 ai: {
-model: "gemini-1.5-flash"
+model: "gemini-1.5-flash-latest"
 },
 
 // typing simulation speed
