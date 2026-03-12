@@ -8,23 +8,6 @@ console.error("❌ GEMINI API KEY NOT FOUND")
 const genAI = new GoogleGenerativeAI(config.geminikey)
 
 const model = genAI.getGenerativeModel({
-model: config.ai.model
-})
-
-/*
-Persona TOKI
-*/
-
-const { GoogleGenerativeAI } = require("@google/generative-ai")
-const config = require("../config")
-
-if(!config.geminikey){
-console.error("❌ GEMINI API KEY NOT FOUND")
-}
-
-const genAI = new GoogleGenerativeAI(config.geminikey)
-
-const model = genAI.getGenerativeModel({
 model: "gemini-1.5-flash-latest"
 })
 
