@@ -63,7 +63,7 @@ const { connection, lastDisconnect, qr } = update
 if(qr){
 
 console.log("SCAN QR CODE BELOW:")
-qrcode.generate(qr,{small:true})
+qrcode.generate(qr,{small:false})
 
 }
 
